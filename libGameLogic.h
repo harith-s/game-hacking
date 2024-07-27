@@ -66,7 +66,7 @@ class IPlayer {
     virtual void FreeQuestList(class IQuest **);
     virtual class IQuest * GetCurrentQuest();
     virtual void SetCurrentQuest(class IQuest *);
-    virtual struct PlayerQuestState GetStateForQuest(class IQuest *);
+    virtual struct PlayerQuestState GetsStateForQuest(class IQuest *);
     virtual void StartQuest(class IQuest *);
     virtual void AdvanceQuestToState(class IQuest *, class IQuestState *);
     virtual void CompleteQuest(class IQuest *);
@@ -139,13 +139,12 @@ class IActor {
     virtual class IActor * GetOwner();
 };
 
+
 template <class T>
 
 class ActorRef{
-  private:
-    T *m_object;
-
   public:
+    T *m_object;
     ActorRef();
     ActorRef(T *);
     ActorRef(const class ActorRef<T> &);
@@ -166,7 +165,7 @@ struct ItemAndCount {
 
 
 class Actor : public IActor {
-  protected:
+  public:
     size_t m_refs;
     uint32_t m_id;
     class IUE4Actor *m_target;
@@ -309,10 +308,10 @@ struct ItemCountInfo {
 
 
 class Player : public Actor, public IPlayer {
-  private:
+  public:
     uint32_t m_characterId;
-    std::string m_playerName;
-    std::string m_teamName;
+    const char* m_playerName;
+    const char* m_teamName;
     uint8_t m_avatarIndex;
     uint32_t m_colors[4];
     class std::map<IItem*, ItemAndCount, std::less<IItem*>, std::allocator<std::pair<IItem* const, ItemAndCount> > > m_inventory;
@@ -326,8 +325,8 @@ class Player : public Actor, public IPlayer {
     float m_pvpChangeTimer;
     int32_t m_pvpChangeReportedTimer;
     bool m_changingServerRegion;
-    std::string m_currentRegion;
-    std::string m_changeRegionDestination;
+    const char* m_currentRegion;
+    const char* m_changeRegionDestination;
     class std::set<std::string, std::less<std::string>, std::allocator<std::string> > m_aiZones;
     int32_t m_mana;
     float m_manaRegenTimer;
@@ -355,9 +354,9 @@ class Player : public Actor, public IPlayer {
     float m_lastHitItemTimeLeft;
     float m_circuitStateCooldownTimer;
 
-  protected:
+  
     virtual void OnKilled(class IActor *, class IItem *);
-  public:
+  
     Player(bool);
     virtual ~Player();
     virtual bool IsPlayer();
@@ -559,13 +558,8 @@ class AIZone {
 
 
 
-
-
-
-
-
 class World {
-  protected:
+  public:
     class std::set<ActorRef<IPlayer>, std::less<ActorRef<IPlayer> >, std::allocator<ActorRef<IPlayer> > > m_players;
     class std::set<ActorRef<IActor>, std::less<ActorRef<IActor> >, std::allocator<ActorRef<IActor> > > m_actors;
     class std::map<unsigned int, ActorRef<IActor>, std::less<unsigned int>, std::allocator<std::pair<unsigned int const, ActorRef<IActor> > > > m_actorsById;
@@ -665,3 +659,469 @@ class World {
 
 
 
+class ClientWorld : public World {
+  public:
+    class ActorRef<IPlayer> m_activePlayer;
+    float m_timeUntilNextNetTick;
+
+
+    ClientWorld();
+    virtual bool HasLocalPlayer();
+    virtual bool IsAuthority();
+    virtual void AddLocalPlayer(class Player *, class ILocalPlayer *);
+    virtual void Tick(float);
+    virtual void Use(class Player *, class Actor *);
+    virtual void Activate(class Player *, class IItem *);
+    virtual void Reload(class Player *);
+    virtual void Jump(bool);
+    virtual void Sprint(bool);
+    virtual void FireRequest(bool);
+    virtual void TransitionToNPCState(class Player *, const std::string &);
+    virtual void BuyItem(class Player *, class Actor *, class IItem *, uint32_t);
+    virtual void SellItem(class Player *, class Actor *, class IItem *, uint32_t);
+    virtual void Respawn(class Player *);
+    virtual void Teleport(class Player *, const std::string &);
+    virtual void Chat(class Player *, const std::string &);
+    virtual void FastTravel(class Player *, const std::string &, const std::string &);
+    virtual void SetPvPDesired(class Player *, bool);
+    virtual void SubmitDLCKey(class Player *, const std::string &);
+    virtual void SetCircuitInputs(class Player *, const std::string &, uint32_t);
+    virtual void SendAddItemEvent(class Player *, class IItem *, uint32_t);
+    virtual void SendRemoveItemEvent(class Player *, class IItem *, uint32_t);
+    virtual void SendLoadedAmmoEvent(class Player *, class IItem *, uint32_t);
+    virtual void SendPickedUpEvent(class Player *, const std::string &);
+    virtual void EquipItem(class Player *, uint8_t, class IItem *);
+    virtual void SetCurrentSlot(class Player *, uint8_t);
+    virtual void SendEquipItemEvent(class Player *, uint8_t, class IItem *);
+    virtual void SendCurrentSlotEvent(class Player *, uint8_t);
+    virtual void SetCurrentQuest(class Player *, class IQuest *);
+    virtual void SendSetCurrentQuestEvent(class Player *, class IQuest *);
+    virtual void SendStartQuestEvent(class Player *, class IQuest *);
+    virtual void SendAdvanceQuestToStateEvent(class Player *, class IQuest *, class IQuestState *);
+    virtual void SendCompleteQuestEvent(class Player *, class IQuest *);
+    virtual void SendHealthUpdateEvent(class Actor *, int32_t);
+    virtual void SendManaUpdateEvent(class Player *, int32_t);
+    virtual void SendCountdownUpdateEvent(class Player *, int32_t);
+    virtual void SendPvPCountdownUpdateEvent(class Player *, bool, int32_t);
+    virtual void SendPvPEnableEvent(class Player *, bool);
+    virtual void SendStateEvent(class Actor *, const std::string &, bool);
+    virtual void SendTriggerEvent(class Actor *, const std::string &, class Actor *, bool);
+    virtual void SendFireBulletsEvent(class Actor *, class IItem *, const struct Vector3 &, uint32_t, float);
+    virtual void SendDisplayEvent(class Player *, const std::string &, const std::string &);
+    virtual void SendNPCConversationStateEvent(class Player *, class Actor *, const std::string &);
+    virtual void SendNPCConversationEndEvent(class Player *);
+    virtual void SendNPCShopEvent(class Player *, class Actor *);
+    virtual void SendRespawnEvent(class Player *, const struct Vector3 &, const struct Rotation &);
+    virtual void SendTeleportEvent(class Actor *, const struct Vector3 &, const struct Rotation &);
+    virtual void SendRelativeTeleportEvent(class Actor *, const struct Vector3 &);
+    virtual void SendReloadEvent(class Player *, class IItem *, class IItem *, uint32_t);
+    virtual void SendPlayerJoinedEvent(class Player *);
+    virtual void SendPlayerLeftEvent(class Player *);
+    virtual void SendPlayerItemEvent(class Player *);
+    virtual void SendActorSpawnEvent(class Actor *);
+    virtual void SendActorDestroyEvent(class Actor *);
+    virtual void SendExistingPlayerEvent(class Player *, class Player *);
+    virtual void SendExistingActorEvent(class Player *, class Actor *);
+    virtual void SendChatEvent(class Player *, const std::string &);
+    virtual void SendKillEvent(class Player *, class Actor *, class IItem *);
+    virtual void SendCircuitOutputEvent(class Player *, const std::string &, uint32_t, const class std::vector<class std::allocator<bool>> &);
+    virtual void SendActorPositionEvents(class Player *);
+    virtual void SendRegionChangeEvent(class Player *, const std::string &);
+    virtual void SendLastHitByItemEvent(class Player *, class IItem *);
+};
+class IActorFactory {
+  public:
+    virtual class Actor * CreateActor();
+};
+class ItemPickup : public Actor {
+  private:
+    class IItem *m_item;
+    std::string m_pickupName;
+
+  public:
+    ItemPickup(class IItem *, const std::string &, const std::string &);
+    class IItem * GetItem() const;
+    const std::string & GetPickupName() const;
+    virtual bool CanUse(class IPlayer *);
+    virtual void PerformUse(class IPlayer *);
+};
+
+class GameAPI {
+  private:
+    void InitObjects();
+    void StartServerListener(const struct ServerInfo &);
+  public:
+    GameAPI();
+    void InitLocal(class ILocalPlayer *);
+    void InitClient(class ILocalPlayer *);
+    void InitServer(const char *, uint16_t, int32_t, const char *, uint16_t, const char *, const char *, const char *);
+    void Shutdown();
+    void Tick(float);
+    bool IsAuthority();
+    bool IsDedicatedServer();
+    bool IsTransitioningToNewServer();
+    class IItem * GetItemByName(const char *);
+    class IQuest * GetQuestByName(const char *);
+    class FastTravelDestination * GetFastTravelDestination(const std::string &);
+    class IAchievement * GetAchievement(const char *);
+    class IAchievementList * GetAchievements();
+    class std::vector<IAchievement*, std::allocator<IAchievement*> > GetAchievementList();
+    class std::vector<ItemPickup*, std::allocator<ItemPickup*> > GetGoldenEggList();
+    size_t GetGoldenEggCount();
+    virtual bool SpawnActor(class IActor *, const struct Vector3 &, const struct Rotation &, bool);
+    virtual bool SpawnActorAtNamedLocation(class IActor *, const char *);
+    virtual bool SpawnRemotePlayer(class IPlayer *, const struct Vector3 &, const struct Rotation &);
+    virtual void DamageInRadius(class IActor *, class IItem *, const struct Vector3 &, float, int32_t, enum DamageType);
+    virtual size_t GetNamedLocationPoints(const char *, struct LocationAndRotation *&);
+    virtual void FreeNamedLocationPoints(struct LocationAndRotation *);
+    class std::vector<LocationAndRotation, std::allocator<LocationAndRotation> > GetNamedLocationPointList(const char *);
+    bool GetNamedLocationPoint(const std::string &, struct LocationAndRotation &);
+    class std::vector<LocationAndRotation, std::allocator<LocationAndRotation> > GetSpawnPoints(const char *);
+    void GiveAll(class IPlayer *);
+    virtual struct Vector3 GetDirectionFromRotation(const struct Rotation &);
+    virtual struct Rotation GetRotationFromDirection(const struct Vector3 &);
+    virtual void OnWeaponFired(class IItem *, const struct Vector3 &, const struct Vector3 &);
+    virtual void OnBulletHitActor(class IItem *, class IActor *, const struct Vector3 &, const struct Vector3 &);
+    virtual void OnBulletHitWorld(class IItem *, const struct Vector3 &, const struct Vector3 &);
+    virtual void OnLog(const char *);
+    void Log(const char *);
+    virtual void OnMasterServerConnected(bool, const char *, const char *);
+    virtual void OnLoginComplete(bool, const char *, bool, struct CharacterInfo *, size_t);
+    virtual void OnRegisterComplete(bool, const char *, const char *, bool);
+    virtual void OnCreateCharacterComplete(bool, const char *, int32_t);
+    virtual void OnDeleteCharacterComplete(bool, int32_t);
+    virtual void OnJoinGameServerComplete(bool, const char *, bool, const char *, uint16_t, const char *);
+    virtual void OnGameServerConnected(bool, const char *, const struct Vector3 &, const struct Rotation &);
+    virtual void OnTransitionToNewServer();
+    virtual void OnSubmitAnswerComplete(bool, const char *);
+    virtual void OnTeammatesListed(const char **, const char **, size_t);
+    virtual uint32_t GetDefaultCircuitInputs(const char *);
+    virtual size_t GetCircuitOutputCount(const char *);
+    virtual void GetCircuitOutputs(const char *, uint32_t, bool *, size_t, bool *);
+    class LootTier * GetLootTier(uint32_t);
+    void Enqueue(const class std::function<void ()> &);
+    void Process(const class std::function<void ()> &);
+    class MasterServerConnection * GetMasterServer();
+    void UpdatePlayerCounts();
+    void GetTeammates();
+    void Login(const char *, const char *);
+    void CreateCharacter(const char *, uint8_t, uint32_t *);
+    void DeleteCharacter(int32_t);
+    void JoinGameServer(int32_t, bool);
+    void SubmitAnswer(const char *, const char *);
+    class GameServerConnection * GetGameServer();
+    void ConnectToGameServer(const char *, uint16_t, int32_t, const char *);
+    bool IsConnectedToMasterServer();
+    bool IsConnectedToGameServer();
+    int32_t GetUserId();
+    int32_t GetCharacterId();
+    const char * GetUserName();
+    const char * GetTeamName();
+    const char * GetTeamHash();
+    void ConnectToMasterServer(const char *, uint16_t, const char *);
+    void DisconnectFromMasterServer();
+    void Register(const char *, const char *, const char *);
+    void TransitionToNewGameServer();
+    class Actor * CreateRemoteActorByName(const std::string &, bool);
+    class Actor * CreateRemoteActorByNameWithOwner(const std::string &, bool, class IActor *);
+    bool HasActorFactory(const std::string &);
+    int32_t GetTeamPlayerCount();
+    int32_t GetTotalPlayerCount();
+};
+// class std::vector<ItemPickup*, std::allocator<ItemPickup*> > : protected std::_Vector_base<ItemPickup*, _Alloc> {
+//   public:
+//     vector();
+//     vector(const allocator_type &);
+//     vector(size_type, const allocator_type &);
+//     vector(size_type, const value_type &, const allocator_type &);
+//     vector(const class std::vector<ItemPickup*, _Alloc> &);
+//     vector(class std::vector<ItemPickup*, _Alloc> &&);
+//     vector(const class std::vector<ItemPickup*, _Alloc> &, const allocator_type &);
+//     vector(class std::vector<ItemPickup*, _Alloc> &&, const allocator_type &);
+//     vector(class std::initializer_list<ItemPickup*>, const allocator_type &);
+//     ~vector();
+//     class std::vector<ItemPickup*, _Alloc> & operator=(const class std::vector<ItemPickup*, _Alloc> &);
+//     class std::vector<ItemPickup*, _Alloc> & operator=(class std::vector<ItemPickup*, _Alloc> &&);
+//     class std::vector<ItemPickup*, _Alloc> & operator=(class std::initializer_list<ItemPickup*>);
+//     void assign(size_type, const value_type &);
+//     void assign(class std::initializer_list<ItemPickup*>);
+//     iterator begin();
+//     const_iterator begin() const;
+//     iterator end();
+//     const_iterator end() const;
+//     reverse_iterator rbegin();
+//     const_reverse_iterator rbegin() const;
+//     reverse_iterator rend();
+//     const_reverse_iterator rend() const;
+//     const_iterator cbegin() const;
+//     const_iterator cend() const;
+//     const_reverse_iterator crbegin() const;
+//     const_reverse_iterator crend() const;
+//     size_type size() const;
+//     size_type max_size() const;
+//     void resize(size_type);
+//     void resize(size_type, const value_type &);
+//     void shrink_to_fit();
+//     size_type capacity() const;
+//     bool empty() const;
+//     void reserve(size_type);
+//     reference operator[](size_type);
+//     const_reference operator[](size_type) const;
+//   protected:
+//     void _M_range_check(size_type) const;
+//   public:
+//     const_reference at(size_type) const;
+//     reference front();
+//     const_reference front() const;
+//     reference back();
+//     const_reference back() const;
+//     class ItemPickup ** data();
+//     class ItemPickup * const * data() const;
+//     void push_back(const value_type &);
+//     void push_back(value_type &&);
+//     void pop_back();
+//     iterator insert(iterator, const value_type &);
+//     iterator insert(iterator, value_type &&);
+//     void insert(iterator, class std::initializer_list<ItemPickup*>);
+//     void insert(iterator, size_type, const value_type &);
+//     iterator erase(iterator);
+//     iterator erase(iterator, iterator);
+//     void swap(class std::vector<ItemPickup*, _Alloc> &);
+//     void clear();
+//   protected:
+//     void _M_fill_initialize(size_type, const value_type &);
+//     void _M_default_initialize(size_type);
+//     void _M_fill_assign(size_type, const value_type &);
+//     void _M_fill_insert(iterator, size_type, const value_type &);
+//     void _M_default_append(size_type);
+//     bool _M_shrink_to_fit();
+//     size_type _M_check_len(size_type, const char *) const;
+//     void _M_erase_at_end(pointer);
+//   private:
+//     void _M_move_assign(class std::vector<ItemPickup*, _Alloc> &&, std::true_type);
+//     void _M_move_assign(class std::vector<ItemPickup*, _Alloc> &&, std::false_type);
+
+//   public:
+//     typedef _Alloc allocator_type;
+//     typedef _Tp value_type;
+//     typedef class __gnu_cxx::__normal_iterator<ItemPickup**, std::vector<ItemPickup*, _Alloc> > iterator;
+//     typedef class __gnu_cxx::__normal_iterator<ItemPickup* const*, std::vector<ItemPickup*, _Alloc> > const_iterator;
+//     typedef class std::reverse_iterator<__gnu_cxx::__normal_iterator<ItemPickup**, std::vector<ItemPickup*, _Alloc> > > reverse_iterator;
+//     typedef class std::reverse_iterator<__gnu_cxx::__normal_iterator<ItemPickup* const*, std::vector<ItemPickup*, _Alloc> > > const_reverse_iterator;
+//     typedef __gnu_cxx::__alloc_traits<_Alloc>::reference reference;
+//     typedef __gnu_cxx::__alloc_traits<_Alloc>::const_reference const_reference;
+//     typedef std::_Vector_base<ItemPickup*, _Alloc>::pointer pointer;
+// };
+// template <T3>
+
+// class GoldenEggPickup: public ItemPickup {
+//   private:
+//     static std::string GetNameForEgg(int);
+//   public:
+//     GoldenEggPickup();
+// };
+
+// template <class T2>
+
+// class ActorFactory: public IActorFactory {
+//   public:
+//     virtual class Actor * CreateActor();
+// };
+class BallmerPeakEgg : public ItemPickup {
+  public:
+    BallmerPeakEgg();
+    virtual bool CanUse(class IPlayer *);
+};
+
+
+
+class AIState;
+class BallmerPeakPoster : public Actor {
+  public:
+    BallmerPeakPoster();
+    virtual bool CanBeDamaged(class IActor *);
+    virtual void Damage(class IActor *, class IItem *, int32_t, enum DamageType);
+}; 
+struct TimerEvent {
+    float timeLeft;
+    float initialTime;
+    bool recurring;
+    bool withContext;
+    std::function<void ()> callback;
+    std::function<void (Actor *)> contextCallback;
+};
+
+class TimerSet {
+  private:
+    std::map<std::string, TimerEvent, std::less<std::string>, std::allocator<std::pair<const std::string, TimerEvent>>> m_timers;
+
+  public:
+    void Add(const std::string &, float, const std::function<void ()> &);
+    void AddWithContext(const std::string &, float, const std::function<void (Actor *)> &);
+    void AddRecurring(const std::string &, float, const std::function<void ()> &);
+    void AddRecurringWithContext(const std::string &, float, const std::function<void (Actor *)> &);
+    void Cancel(const std::string &);
+    void Clear();
+    void Tick(Actor *, float);
+};
+
+enum EnemyRank {NormalEnemy, EliteEnemy, LegendaryEnemy};
+
+class AIActor : public Actor {
+  protected:
+    class std::map<std::string, AIState*, std::less<std::string>, std::allocator<std::pair<std::string const, AIState*> > > m_states;
+    class AIState *m_initialState;
+    class AIState *m_currentState;
+    class ActorRef<Actor> m_target;
+
+    void AddInitialState(const std::string &, class AIState *);
+    void AddState(const std::string &, class AIState *);
+  public:
+    AIActor(const std::string &);
+    virtual ~AIActor();
+    virtual bool IsCharacter();
+    virtual bool ShouldSendPositionUpdates();
+    virtual bool ShouldReceivePositionUpdates();
+    class Actor * GetTarget() const;
+    virtual bool ShouldTargetPlayer(class Player *);
+    virtual bool ShouldAttackFromRange() const;
+    virtual float GetRangedAttackDistance() const;
+    virtual bool ShouldWander() const;
+    virtual bool ShouldMove() const;
+    virtual bool ShouldAttack() const;
+    virtual bool ShouldAttackMultipleTargets() const;
+    virtual void Tick(float);
+    virtual void OnAIMoveComplete();
+    class AIState * GetStateByName(const std::string &);
+    void TransitionToState(const std::string &, class Actor *);
+    virtual void TransitionToState(class AIState *, class Actor *);
+};
+class AIState {
+  protected:
+    class AIActor *m_owner;
+    class TimerSet m_timers;
+
+  public:
+    AIState(class AIActor *);
+    virtual ~AIState();
+    class AIActor * GetOwner() const;
+    class Actor * GetTarget() const;
+    virtual void EnterState(class Actor *);
+    virtual void LeaveState();
+    virtual void Tick(float);
+    virtual void OnAIMoveComplete();
+    void AddTimer(const std::string &, float, const class std::function<void ()> &);
+    void AddTimerWithContext(const std::string &, float, const class std::function<void (Actor *)> &);
+    void AddRecurringTimer(const std::string &, float, const class std::function<void ()> &);
+    void AddRecurringTimerWithContext(const std::string &, float, const class std::function<void (Actor *)> &);
+    void CancelTimer(const std::string &);
+    void CancelAllTimers();
+};
+struct TableEntry {
+    uint32_t value;
+    float weight;
+};
+struct LootEntry {
+    class IItem *item;
+    uint32_t minCount;
+    uint32_t maxCount;
+    float weight;
+};
+
+class LootTable {
+  private:
+    float m_dropChance;
+    class std::vector<TableEntry, std::allocator<TableEntry> > m_tiers;
+    class std::vector<TableEntry, std::allocator<TableEntry> > m_counts;
+    float m_totalTierWeight;
+    float m_totalCountWeight;
+    class std::vector<LootEntry, std::allocator<LootEntry> > m_additionalItems;
+
+    uint32_t GetRandomCount();
+    struct LootEntry GetRandomItem();
+  public:
+    LootTable();
+    void SetDropChance(float);
+    void SetTiers(uint32_t, uint32_t, float);
+    void SetCounts(uint32_t, uint32_t, float);
+    void AddAdditionalItem(class IItem *, uint32_t, uint32_t, float);
+    class std::map<IItem*, unsigned int, std::less<IItem*>, std::allocator<std::pair<IItem* const, unsigned int> > > GetItems();
+};
+
+class Enemy : public AIActor {
+  protected:
+    class LootTable m_loot;
+
+    virtual void OnKilled(class IActor *, class IItem *);
+  public:
+    Enemy(const std::string &);
+    virtual bool CanBeDamaged(class IActor *);
+    virtual float GetMaximumDamageDistance();
+    virtual int32_t GetAttackDamage();
+    virtual enum DamageType GetAttackDamageType();
+    virtual class IItem * GetAttackItem();
+    virtual float GetAggressionRadius();
+    virtual float GetAttackTime();
+    virtual float GetAttackHitTime();
+    virtual void OnPrepareAttack(class Actor *);
+    virtual void OnEndAttack();
+    virtual void Attack(class Actor *);
+    virtual enum EnemyRank GetRank() const;
+    virtual struct Rotation GetLookRotation();
+    virtual void Damage(class IActor *, class IItem *, int32_t, enum DamageType);
+};
+class BearChest;
+class Bear : public Enemy {
+  protected:
+    int32_t m_attacksLeftInPosition;
+    class ActorRef<BearChest> m_chest;
+
+    void Init();
+    virtual void OnKilled(class IActor *, class IItem *);
+    virtual void OnTargetKilled(class IActor *, class IItem *);
+  public:
+    Bear();
+    Bear(class BearChest *, const std::string &);
+    virtual ~Bear();
+    virtual float GetMaximumDamageDistance();
+    virtual float GetAggressionRadius();
+    virtual int32_t GetAttackDamage();
+    virtual bool CanBeArmed();
+    virtual void OnPrepareAttack(class Actor *);
+    virtual void OnEndAttack();
+    void AttackForChest(class IPlayer *);
+    void EndChestDefense();
+    virtual int32_t GetMaxHealth();
+    virtual const char * GetDisplayName();
+    virtual std::string GetDeathMessage();
+};
+
+class BearChest : public Actor {
+  private:
+    class std::vector<ActorRef<Bear>, std::allocator<ActorRef<Bear> > > m_bears;
+    class std::map<ActorRef<IPlayer>, float, std::less<ActorRef<IPlayer> >, std::allocator<std::pair<ActorRef<IPlayer> const, float> > > m_playerTimeLeft;
+
+    void UpdatePlayerAttacks();
+    float GetMinimumTimeRemaining();
+  public:
+    BearChest();
+    virtual bool CanUse(class IPlayer *);
+    virtual void PerformUse(class IPlayer *);
+    void AddBear(class Bear *);
+    void RemoveBear(class Bear *);
+    virtual void Tick(float);
+    bool IsEliteStage();
+    bool IsArmedStage();
+    size_t GetQuestPlayerCount() const;
+};
+
+
+class BearShootState : public AIState {
+  private:
+    int32_t m_shotsWithoutVisibility;
+
+  public:
+    BearShootState(class AIActor *);
+    virtual void EnterState(class Actor *);
+    virtual void LeaveState();
+};
