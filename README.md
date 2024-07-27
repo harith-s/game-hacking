@@ -5,46 +5,16 @@ This repository contains two assignments for a reinforcement learning course. Th
 ## Table of Contents
 
 - [Description](#description)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [Contact](#contact)
+
 
 ## Description
 
-### Assignment 1: Multi-Armed Bandits
-In this assignment, you will work with multi-armed bandits. You can adjust the exploration value \( \epsilon \) to see how it affects the performance of the algorithm.
+### Project part 1:
+This involved solving the Unbearable Revenge. First I thought of just hovering over the bears and be done with it, but then realised that the bears shoot too. Then I thought of removing the shooting phase entirely. This involved looking for keywords in BinaryNinja, and all the functions which had the words like "Stand" or "Shoot" in it. I tried to make them all dummy definitions. But that didn't work out too. It looked like the server had its own version of what it thinks should happen. Although interestingly, the changes to these functions had no effect in the Client's side too. 
+But then with the tp function, I could go underground too. Since the bears look for targets and only then shoot them, I thought they may not attack if they don't see the player. And that worked out.
 
-### Assignment 2: Markov Decision Process
-In this assignment, you will work with a 4x4 grid containing reward pots. The goal is to apply a Markov Decision Process (MDP) to figure out the optimal policy. You can change the positions and values of the reward pots to see how the optimal policy changes.
 
-## Installation
-
-1. Clone the repository:
-   ```sh
-   git clone https://github.com/your_username/repo_name.git
-
-2. Make sure necessary libraries such as numpy, pygame and matplotlib are installed.
-```sh
-pip install numpy matplotlib pygame
-```
-3. Run with the IDLE of your choice.
-
-## Usage
-### Assignment 1: Multi-Armed Bandits
-```sh
-   python assignment1.py
-```
-The value of epsilon can be changed within the code under the main function.
-
-## Assignment 2: Markov Decision Process
-```sh
-   python assignment2.py
-```
-The reward pots can be changed by altering the reward array in the beginning of the file.
-
-## Contributing
-The account harith-s is contributing under the name of Harith S, 23B1085.
-
+### Project part 2: 
+First I went around looking for anything in Binary Ninja related to Golden Eggs, and noteiced a bunch of
 ## Contact
 For any further details, contact hars8756@gmail.com!
